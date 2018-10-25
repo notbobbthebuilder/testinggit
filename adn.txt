@@ -1,0 +1,79 @@
+pipeline {
+agent any
+environment {
+dotnet = /'C:\Program Files\dotnet'/
+}
+stages {
+stage ('Checkout') {
+steps {
+git credentialsId: 'userId', url: 'https://github.com/notbobbthebuilder/dotnetcorewebapp',branch: 'master'
+}
+}
+stage ('Restore PACKAGES') {
+steps {
+bat "dotnet restore "
+echo 'packages are restored'
+}
+}
+stage('Clean') {
+steps {
+bat 'dotnet clean'
+echo 'clean is done'
+}
+}
+stage('Build') {
+steps {
+bat 'dotnet build --configuration Release'
+echo 'build is done'
+}
+}
+stage('Pack') {
+steps {
+bat 'dotnet pack --no-build --output nupkgs'
+echo 'nupkgs package is created'
+}
+}
+
+
+
+stage('Publish') {
+steps {
+bat 'dotnet publish . -r win-arm'
+echo 'published to windows os'
+bat 'dotnet publish . -r linux-arm'
+echo 'published to pi os'
+bat 'dotnet publish . -r ubuntu.18.04-x64'
+echo 'published to ubuntu 18.04 os'
+
+}
+}
+stage('testing') {
+steps {
+  bat 'dotnet test ./UnitTestProjecttestmath/UnitTestProjecttestmath.csproj --no-build --no-restore '
+
+}
+}
+// stage('Publish to git') {
+// steps {
+// bat "cmd /c echo protocol=https & echo.host=<git@github.com:notbobbthebuilder/dotnetcorewebapp> & echo.username=${notbobbthebuilder} & echo.password=${Alzeimers14} | git credential approve "
+// }
+stage('gitpush') {
+steps{
+sshagent (credentials: ['bf9d752b-d80e-4004-83c4-c271d0f26f56']) {
+        sh("git clone https://github.com/mygithub/repository.git")
+    }
+
+    sshagent (credentials: ['bf9d752b-d80e-4004-83c4-c271d0f26f56']) {
+
+        sh("(git add ranger-policies/policies.json)")
+        sh("(git commit -m 'daily backup of ranger-policies/policies.json')")
+        sh('(git push git@github.com:notbobbthebuilder/built-repository-.git)')
+    }
+
+}
+}
+}
+}
+
+
+

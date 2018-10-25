@@ -1,0 +1,4 @@
+touch README
+git add README
+git commit -m 'README'
+git push -u new masterd
